@@ -6,13 +6,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0f172a" />
-  <title>极速闹钟 · iOS联动版</title>
+  <title>极速闹钟 · 日历静音震动版</title>
   <style>
     :root {
       --bg: #0f172a;
       --card: #1e293b;
       --accent: #38bdf8;
-      --accent-hover: #0284c7;
       --ios-btn: #f59e0b;
       --text: #f8fafc;
       --muted: #94a3b8;
@@ -195,12 +194,12 @@
   <div class="container">
     <header>
       <h1>⚡ 极速闹钟</h1>
-      <p>上午输入 1005 → 10:05 AM ｜ 下午输入 335 → 3:35 PM</p>
+      <p>上午输入 1005 → 10:05 AM ｜ 下午输入 312 → 3:12 PM</p>
     </header>
 
     <div class="card input-wrap">
-      <input id="timeInput" type="tel" inputmode="numeric" maxlength="4" placeholder="输入数字 如 1005" autofocus />
-      
+      <input id="timeInput" type="tel" inputmode="numeric" maxlength="4" placeholder="输入数字 如 312" autofocus />
+
       <div class="parsed-box" id="parsedBox" style="display:none;">
         <div>
           <div class="parsed-time" id="parsedText">--:--</div>
@@ -209,12 +208,12 @@
         <button class="toggle-ampm" id="toggleAmPmBtn">切换 上/下午</button>
       </div>
 
-      <!-- 核心：iOS 快捷指令联动按钮 -->
+      <!-- 核心：同步完整日期时间到 iOS 快捷指令（日历静音震动） -->
       <button class="btn btn-ios" id="iosShortcutBtn" disabled>
-        ⏰ 同步到 iPhone 系统闹钟（锁屏强震）
+        📅 同步到 iPhone 日历提醒（只震不响）
       </button>
 
-      <!-- 备用：网页亮屏内 5 次提醒 -->
+      <!-- 备用：当前网页亮屏内倒计时提醒 -->
       <button class="btn btn-local" id="startLocalBtn" disabled>
         仅在当前网页内倒计时（需保持亮屏）
       </button>
@@ -230,8 +229,8 @@
     <!-- 辅助设置 -->
     <div class="card">
       <div class="row">
-        <span>网页内提醒附带提示音（iOS 建议开启）</span>
-        <input type="checkbox" id="soundToggle" checked />
+        <span>网页内提醒附带提示音（办公室建议关闭）</span>
+        <input type="checkbox" id="soundToggle" />
       </div>
       <div class="row">
         <span>保持屏幕常亮防休眠</span>
@@ -240,13 +239,13 @@
     </div>
 
     <div class="hint">
-      <strong>💡 iPhone 锁屏震动秘诀：</strong><br/>
-      点击上方橙色按钮，网页会自动复制时间并跳转 iPhone「快捷指令」<code style="color:#fbbf24;">极速闹钟</code>，在系统「时钟」里生成原生强振动闹钟（哪怕手机锁屏、静音也能准点连续震动）。
+      <strong>💡 办公室静音震动说明：</strong><br/>
+      点击橙色按钮会自动复制精确到分钟的时间（如 <code style="color:#fbbf24;">2026-11-20 15:12</code>）并唤起 Shortcuts 中的 <code style="color:#fbbf24;">极速闹钟</code> 添加日历日程；配合 Calendar 声音设为 <strong>None</strong> 与开启 <strong>Vibration</strong>，锁屏即可安静震动。
     </div>
   </div>
 
   <script>
-    // 动态注入 PWA Manifest 实现添加到主屏幕独立运行
+    // 动态注入 PWA Manifest 支持添加到主屏幕独立运行
     const manifest = {
       name: "极速闹钟",
       short_name: "极速闹钟",
@@ -280,7 +279,7 @@
     const soundToggle = document.getElementById('soundToggle');
     const wakeLockToggle = document.getElementById('wakeLockToggle');
 
-    let parsedState = null; // { hour24, minute, isTomorrow }
+    let parsedState = null;
     let manualAmPmOverride = null; // 'AM' | 'PM' | null
     let timerId = null;
     let wakeLock = null;
@@ -306,12 +305,7 @@
         } else if (manualAmPmOverride === 'PM') {
           hour24 = h === 12 ? 12 : h + 12;
         } else {
-          // 智能判定：当前上午则倾向 AM，当前下午则倾向 PM
-          if (currentIsPM) {
-            hour24 = h === 12 ? 12 : h + 12;
-          } else {
-            hour24 = h === 12 ? 12 : h;
-          }
+          hour24 = currentIsPM ? (h === 12 ? 12 : h + 12) : (h === 12 ? 12 : h);
         }
       }
 
@@ -326,6 +320,15 @@
       return { hour24, minute: m, target, isTomorrow };
     }
 
+    function formatFullDateTime(dateObj) {
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      const hh = String(dateObj.getHours()).padStart(2, '0');
+      const min = String(dateObj.getMinutes()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+    }
+
     function formatDisplay(state) {
       const h24 = state.hour24;
       const mStr = String(state.minute).padStart(2, '0');
@@ -335,6 +338,7 @@
       return {
         label: `${period} ${h12}:${mStr}`,
         time24: `${h24Str}:${mStr}`,
+        fullDateTime: formatFullDateTime(state.target),
         day: state.isTomorrow ? '明天（今日该时间已过）' : '今天'
       };
     }
@@ -349,7 +353,7 @@
       }
       const fmt = formatDisplay(parsedState);
       parsedText.textContent = `${fmt.label}  [${fmt.time24}]`;
-      parsedDay.textContent = fmt.day;
+      parsedDay.textContent = `${fmt.day} · ${fmt.fullDateTime}`;
       parsedBox.style.display = 'flex';
       iosShortcutBtn.disabled = false;
       startLocalBtn.disabled = false;
@@ -366,26 +370,24 @@
       updateUI();
     });
 
-    // 核心联动：复制 24 小时制时间并唤起 iOS 快捷指令「极速闹钟」
+    // 同步精确到分钟的完整日期时间（如 "2026-11-20 15:12"）给 iOS 快捷指令「极速闹钟」
     iosShortcutBtn.addEventListener('click', async () => {
       if (!parsedState) return;
       const fmt = formatDisplay(parsedState);
-      const timeStr = fmt.time24; // 例如 "10:05" 或 "15:35"
+      const fullDateTime = fmt.fullDateTime;
 
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(timeStr);
+          await navigator.clipboard.writeText(fullDateTime);
         }
-      } catch (e) {
-        // 忽略剪贴板权限异常，URL 参数依然会传递
-      }
+      } catch (e) {}
 
       const shortcutName = encodeURIComponent('极速闹钟');
-      const inputVal = encodeURIComponent(timeStr);
+      const inputVal = encodeURIComponent(fullDateTime);
       window.location.href = `shortcuts://run-shortcut?name=${shortcutName}&input=text&text=${inputVal}`;
     });
 
-    // 网页内 5 次提醒引擎（Android 振动 + iOS 声音备用）
+    // 网页内 5 次提醒引擎
     function playBeep() {
       if (!soundToggle.checked) return;
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -453,7 +455,6 @@
       if (navigator.vibrate) navigator.vibrate(0);
     });
 
-    // 屏幕常亮控制
     wakeLockToggle.addEventListener('change', async (e) => {
       if (e.target.checked && 'wakeLock' in navigator) {
         try {
