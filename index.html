@@ -1,1378 +1,469 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="dark">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#0f172a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="极速振动提醒" />
-  <title>极速振动提醒 PWA · 智能5次振动闹钟</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'PingFang SC', 'Microsoft YaHei', 'sans-serif'],
-          },
-          animation: {
-            'pulse-ring': 'pulseRing 1.1s cubic-bezier(0.24, 0, 0.38, 1) infinite',
-            'vibrate-shake': 'vibrateShake 0.28s linear infinite',
-            'screen-flash': 'screenFlash 1.1s ease-in-out infinite',
-          },
-          keyframes: {
-            pulseRing: {
-              '0%': { transform: 'scale(0.92)', opacity: '0.85' },
-              '75%': { transform: 'scale(1.4)', opacity: '0' },
-              '100%': { transform: 'scale(1.4)', opacity: '0' },
-            },
-            vibrateShake: {
-              '0%, 100%': { transform: 'translate(0, 0) rotate(0deg)' },
-              '20%': { transform: 'translate(-4px, 1px) rotate(-6deg)' },
-              '40%': { transform: 'translate(4px, -1px) rotate(6deg)' },
-              '60%': { transform: 'translate(-3px, -1px) rotate(-4deg)' },
-              '80%': { transform: 'translate(3px, 1px) rotate(4deg)' },
-            },
-            screenFlash: {
-              '0%, 100%': { backgroundColor: 'rgba(2, 6, 23, 0.92)' },
-              '45%': { backgroundColor: 'rgba(8, 51, 68, 0.95)' },
-            }
-          }
-        }
-      }
-    };
-  </script>
+  <meta name="theme-color" content="#0f172a" />
+  <title>极速闹钟 · iOS联动版</title>
   <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --ios-btn: #f59e0b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --danger: #ef4444;
+      --success: #22c55e;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
-      background-color: #0b1120;
-      color: #f8fafc;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
-    .tabular-nums {
-      font-variant-numeric: tabular-nums;
-    }
-    input::-webkit-outer-spin-button,
-    input::-webkit-inner-spin-button {
-      -webkit-appearance: none;
       margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 16px 40px;
     }
-    input[type=number] {
-      -moz-appearance: textfield;
+    .container {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
     }
-    ::-webkit-scrollbar {
-      width: 6px;
+    header {
+      text-align: center;
+      margin-top: 8px;
     }
-    ::-webkit-scrollbar-track {
-      background: transparent;
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
     }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(148, 163, 184, 0.2);
-      border-radius: 9999px;
+    header p {
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .input-wrap {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    input[type="tel"] {
+      width: 100%;
+      background: #0f172a;
+      border: 2px solid #334155;
+      border-radius: 14px;
+      color: var(--text);
+      font-size: 36px;
+      font-weight: 700;
+      text-align: center;
+      padding: 14px;
+      letter-spacing: 4px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="tel"]:focus {
+      border-color: var(--accent);
+    }
+    .parsed-box {
+      width: 100%;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .parsed-time {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .parsed-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .toggle-ampm {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 15px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-ios {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff;
+      box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35);
+    }
+    .btn-local {
+      background: #334155;
+      color: var(--text);
+      font-size: 14px;
+      padding: 12px;
+    }
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .status-card {
+      text-align: center;
+      display: none;
+    }
+    .status-card.active {
+      display: block;
+    }
+    .countdown {
+      font-size: 32px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      margin: 8px 0;
+      color: var(--success);
+    }
+    .ringing {
+      animation: pulse 0.6s infinite alternate;
+      border-color: var(--danger);
+    }
+    @keyframes pulse {
+      from { box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
+      to { box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); }
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 14px;
+    }
+    .row:last-child { border-bottom: none; }
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent);
+    }
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      background: rgba(255,255,255,0.04);
+      padding: 12px;
+      border-radius: 12px;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-start px-4 py-6 sm:py-10 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-
-  <!-- 主应用容器 -->
-  <main class="w-full max-w-md mx-auto flex flex-col gap-4 pb-16">
-
-    <!-- 顶部栏：PWA 状态、测试振动与安装按钮 -->
-    <header class="flex items-center justify-between gap-2">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-          <!-- 振动手机图标 -->
-          <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-            <rect x="7" y="4" width="10" height="16" rx="2" />
-            <path stroke-linecap="round" d="M3 8v8M21 8v8" />
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-base font-bold tracking-tight text-white leading-tight">极速振动提醒</h1>
-          <p id="pwa-status-text" class="text-[11px] text-slate-400">智能上下午识别 · 默认纯振动5次</p>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <!-- 测试5次振动按钮 -->
-        <button id="btn-test-alarm" type="button"
-          class="px-3 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 active:scale-95 border border-cyan-500/40 text-xs font-semibold text-cyan-300 transition flex items-center gap-1.5 shadow-sm cursor-pointer">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-            <rect x="7" y="4" width="10" height="16" rx="2" />
-            <path stroke-linecap="round" d="M3 9v6M21 9v6" />
-          </svg>
-          <span>测试5次振动</span>
-        </button>
-
-        <!-- PWA 安装按钮 -->
-        <button id="btn-install-pwa" type="button"
-          class="px-3 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 active:scale-95 border border-slate-700/70 text-xs font-medium text-slate-200 transition flex items-center gap-1 cursor-pointer">
-          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-          <span>安装</span>
-        </button>
-      </div>
+<body>
+  <div class="container">
+    <header>
+      <h1>⚡ 极速闹钟</h1>
+      <p>上午输入 1005 → 10:05 AM ｜ 下午输入 335 → 3:35 PM</p>
     </header>
 
-    <!-- 设备振动能力与系统通知状态提示条 -->
-    <section class="rounded-2xl bg-slate-900/80 border border-slate-800/90 p-3.5 flex flex-col gap-2.5">
-      <div class="flex items-center justify-between gap-2">
-        <div id="vibrate-support-badge" class="flex items-center gap-2 text-xs font-medium">
-          <!-- JS 动态填入硬件振动支持状态 -->
-        </div>
-        <button id="btn-request-notify" type="button"
-          class="shrink-0 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] font-medium text-slate-300 transition cursor-pointer">
-          开启系统通知
-        </button>
-      </div>
-
-      <!-- 快捷模式开关栏：屏幕常亮防休眠 + 可选声音辅助 -->
-      <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
-        <!-- 屏幕常亮防休眠开关 -->
-        <button id="btn-toggle-wakelock" type="button"
-          class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-700 transition text-left cursor-pointer">
-          <div class="min-w-0 pr-1">
-            <div class="text-[11px] font-semibold text-slate-200 truncate">屏幕常亮防休眠</div>
-            <div id="wakelock-status-sub" class="text-[10px] text-slate-500">已关闭</div>
-          </div>
-          <span id="wakelock-dot" class="w-2.5 h-2.5 rounded-full bg-slate-700 shrink-0 transition-colors"></span>
-        </button>
-
-        <!-- 可选声音辅助开关（默认关闭，纯振动） -->
-        <button id="btn-toggle-sound-fallback" type="button"
-          class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-700 transition text-left cursor-pointer">
-          <div class="min-w-0 pr-1">
-            <div class="text-[11px] font-semibold text-slate-200 truncate">同时开启声音提示</div>
-            <div id="sound-status-sub" class="text-[10px] text-slate-500">默认关闭(纯振动)</div>
-          </div>
-          <span id="sound-dot" class="w-2.5 h-2.5 rounded-full bg-slate-700 shrink-0 transition-colors"></span>
-        </button>
-      </div>
-    </section>
-
-    <!-- 实时时钟卡片 -->
-    <section class="relative overflow-hidden rounded-3xl bg-slate-900/90 border border-slate-800/90 p-5 shadow-xl">
-      <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-cyan-500/10 blur-2xl pointer-events-none"></div>
-      <div class="flex items-center justify-between mb-1.5">
-        <span id="current-date-display" class="text-xs font-medium text-slate-400">正在加载日期...</span>
-        <span id="current-period-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/25">
-          上午时段 (AM)
-        </span>
-      </div>
-      <div class="flex items-baseline gap-2.5">
-        <div id="live-clock-time" class="text-4xl sm:text-5xl font-extrabold tracking-tight text-white tabular-nums">
-          00:00:00
-        </div>
-        <div id="live-clock-ampm" class="text-sm font-bold text-cyan-400 tracking-wider">
-          AM
-        </div>
-      </div>
-      <p id="smart-rule-hint" class="mt-2 text-xs text-slate-400 leading-relaxed">
-        当前处于<strong class="text-slate-200">上午</strong>，输入如 <code class="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300">1005</code> 将自动设为 <strong class="text-cyan-300">10:05 AM</strong>
-      </p>
-    </section>
-
-    <!-- 核心智能速记输入卡片 -->
-    <section class="rounded-3xl bg-slate-900 border border-slate-800 p-5 shadow-2xl shadow-black/40">
-      <form id="alarm-form" class="flex flex-col gap-4" novalidate>
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <label for="time-input" class="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              快速输入时间数字
-            </label>
-            <span class="text-[11px] text-slate-500">支持 3~4 位数字（如 1005 / 335）</span>
-          </div>
-
-          <div class="relative flex items-center">
-            <input
-              id="time-input"
-              type="text"
-              inputmode="numeric"
-              autocomplete="off"
-              maxlength="5"
-              placeholder="例如 1005 或 335"
-              class="w-full rounded-2xl bg-slate-950/90 border-2 border-slate-800 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/15 px-4 py-4 text-3xl sm:text-4xl font-extrabold tracking-widest text-center text-white placeholder:text-slate-600 placeholder:text-xl placeholder:font-medium placeholder:tracking-normal outline-none transition tabular-nums"
-            />
-            <button
-              id="btn-clear-input"
-              type="button"
-              aria-label="清空输入"
-              class="hidden absolute right-3 w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition cursor-pointer">
-              ✕
-            </button>
-          </div>
-        </div>
-
-        <!-- 实时智能解析预览条 -->
-        <div id="parse-preview-box" class="rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 transition-all">
-          <div id="parse-empty-state" class="flex items-center justify-between text-xs text-slate-400">
-            <span>📳 快捷示例：上午输 <b class="text-slate-200">1005</b>，下午输 <b class="text-slate-200">335</b></span>
-            <div class="flex gap-1.5">
-              <button type="button" data-quick="1005" class="quick-sample px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 font-semibold tabular-nums transition cursor-pointer">1005</button>
-              <button type="button" data-quick="335" class="quick-sample px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 font-semibold tabular-nums transition cursor-pointer">335</button>
-            </div>
-          </div>
-
-          <div id="parse-valid-state" class="hidden flex items-center justify-between gap-2">
-            <div class="flex flex-col">
-              <span class="text-[11px] text-slate-400">将设在（到点自动振动 <strong class="text-cyan-300">5</strong> 次）：</span>
-              <div class="flex items-center gap-2 mt-0.5 flex-wrap">
-                <span id="parsed-target-label" class="text-base sm:text-lg font-bold text-cyan-300">
-                  今天 上午 10:05
-                </span>
-                <span id="parsed-24h-badge" class="px-2 py-0.5 rounded-md bg-slate-800 text-[11px] font-mono text-slate-300">
-                  10:05 AM
-                </span>
-              </div>
-              <span id="parsed-countdown-hint" class="text-[11px] text-emerald-400 mt-0.5">
-                距离现在还有 1小时 20分钟
-              </span>
-            </div>
-
-            <!-- 一键切换 上午/下午 按钮 -->
-            <button
-              id="btn-toggle-ampm"
-              type="button"
-              class="shrink-0 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 text-xs font-semibold text-indigo-300 transition flex flex-col items-center cursor-pointer">
-              <span>切换</span>
-              <span class="text-[10px] text-slate-400">上午/下午</span>
-            </button>
-          </div>
-
-          <div id="parse-error-state" class="hidden text-xs text-rose-400 font-medium flex items-center gap-1.5">
-            <span>⚠️</span>
-            <span id="parse-error-msg">请输入有效时间（如 335 表示 3:35，1005 表示 10:05）</span>
-          </div>
-        </div>
-
-        <!-- 可选备注输入 + 提交按钮 -->
-        <div class="flex flex-col sm:flex-row gap-2.5">
-          <input
-            id="note-input"
-            type="text"
-            maxlength="30"
-            placeholder="提醒标签（可选，如：喝水、开会、关火）"
-            class="flex-1 rounded-2xl bg-slate-950/80 border border-slate-800 focus:border-indigo-400 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition"
-          />
-          <button
-            id="btn-add-alarm"
-            type="submit"
-            class="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-cyan-500/25 transition flex items-center justify-center gap-2 cursor-pointer">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>设定振动</span>
-          </button>
-        </div>
-      </form>
-    </section>
-
-    <!-- 进行中的提醒列表 -->
-    <section class="flex flex-col gap-3">
-      <div class="flex items-center justify-between px-1">
-        <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-          <span>待触发提醒</span>
-          <span id="active-count-badge" class="px-2 py-0.5 rounded-full text-xs bg-cyan-500/15 text-cyan-300 tabular-nums">0</span>
-        </h2>
-        <span id="alert-mode-summary" class="text-[11px] text-slate-500">每次到点自动振动 5 次</span>
-      </div>
-
-      <div id="active-alarms-list" class="flex flex-col gap-2.5">
-        <!-- 动态渲染闹钟卡片 -->
-      </div>
-
-      <div id="empty-alarms-placeholder" class="rounded-3xl border border-dashed border-slate-800 p-8 text-center">
-        <div class="text-3xl mb-2">📳</div>
-        <p class="text-sm font-medium text-slate-300">暂无待触发的振动提醒</p>
-        <p class="text-xs text-slate-500 mt-1">在上方输入框键入数字并按回车即可秒设</p>
-      </div>
-    </section>
-
-    <!-- 已完成记录（可折叠） -->
-    <section id="completed-section" class="hidden flex flex-col gap-2.5 mt-1">
-      <div class="flex items-center justify-between px-1">
-        <button id="btn-toggle-completed" type="button" class="text-xs font-semibold text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition cursor-pointer">
-          <span id="completed-arrow">▼</span>
-          <span>已完成历史 (<span id="completed-count">0</span>)</span>
-        </button>
-        <button id="btn-clear-completed" type="button" class="text-xs text-slate-500 hover:text-rose-400 transition cursor-pointer">
-          清空历史
-        </button>
-      </div>
-      <div id="completed-alarms-list" class="flex flex-col gap-2"></div>
-    </section>
-
-  </main>
-
-  <!-- 全屏5次振动提醒弹窗 -->
-  <div id="ringing-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-5 bg-slate-950/92 backdrop-blur-xl animate-screen-flash">
-    <div id="ringing-card" class="relative w-full max-w-sm rounded-3xl bg-slate-900 border-2 border-cyan-400/60 p-7 text-center shadow-2xl shadow-cyan-500/25 flex flex-col items-center transition-transform duration-150">
+    <div class="card input-wrap">
+      <input id="timeInput" type="tel" inputmode="numeric" maxlength="4" placeholder="输入数字 如 1005" autofocus />
       
-      <!-- 脉冲触感波纹手机振动图标 -->
-      <div class="relative w-24 h-24 mb-5 flex items-center justify-center">
-        <div class="absolute inset-0 rounded-full bg-cyan-400/35 animate-pulse-ring"></div>
-        <div class="relative w-20 h-20 rounded-full bg-gradient-to-br from-cyan-400 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/40">
-          <svg class="w-10 h-10 text-white animate-vibrate-shake" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-            <rect x="7" y="4" width="10" height="16" rx="2" />
-            <path stroke-linecap="round" d="M3 8v8M21 8v8" />
-          </svg>
+      <div class="parsed-box" id="parsedBox" style="display:none;">
+        <div>
+          <div class="parsed-time" id="parsedText">--:--</div>
+          <div class="parsed-sub" id="parsedDay">今天</div>
         </div>
+        <button class="toggle-ampm" id="toggleAmPmBtn">切换 上/下午</button>
       </div>
 
-      <!-- 5次振动进度指示器 -->
-      <div class="px-3.5 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-400/30 text-cyan-300 text-xs font-bold tracking-wide mb-3">
-        正在振动提醒：第 <span id="chime-current-num" class="text-base text-white mx-0.5 tabular-nums">1</span> / 5 次
-      </div>
+      <!-- 核心：iOS 快捷指令联动按钮 -->
+      <button class="btn btn-ios" id="iosShortcutBtn" disabled>
+        ⏰ 同步到 iPhone 系统闹钟（锁屏强震）
+      </button>
 
-      <!-- 5颗触感进度圆点 -->
-      <div id="chime-dots" class="flex items-center gap-2.5 mb-4">
-        <span class="chime-dot w-3.5 h-3.5 rounded-full bg-slate-700 transition-all duration-200"></span>
-        <span class="chime-dot w-3.5 h-3.5 rounded-full bg-slate-700 transition-all duration-200"></span>
-        <span class="chime-dot w-3.5 h-3.5 rounded-full bg-slate-700 transition-all duration-200"></span>
-        <span class="chime-dot w-3.5 h-3.5 rounded-full bg-slate-700 transition-all duration-200"></span>
-        <span class="chime-dot w-3.5 h-3.5 rounded-full bg-slate-700 transition-all duration-200"></span>
-      </div>
-
-      <div id="ringing-time-text" class="text-4xl font-extrabold text-white tabular-nums tracking-tight">
-        10:05 AM
-      </div>
-      <p id="ringing-note-text" class="mt-2 text-base font-medium text-slate-200">
-        时间到了！
-      </p>
-      <p id="ringing-mode-hint" class="mt-1 text-xs text-slate-400">
-        已完成 5 次节奏振动后将自动停止
-      </p>
-
-      <button
-        id="btn-dismiss-ringing"
-        type="button"
-        class="mt-6 w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 active:scale-95 text-white font-bold text-base shadow-lg shadow-cyan-500/30 transition cursor-pointer">
-        知道了 / 停止
+      <!-- 备用：网页亮屏内 5 次提醒 -->
+      <button class="btn btn-local" id="startLocalBtn" disabled>
+        仅在当前网页内倒计时（需保持亮屏）
       </button>
     </div>
-  </div>
 
-  <!-- PWA 安装指引弹窗 -->
-  <div id="install-guide-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-5 bg-slate-950/85 backdrop-blur-md">
-    <div class="w-full max-w-sm rounded-3xl bg-slate-900 border border-slate-700 p-6 shadow-2xl">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-base font-bold text-white">安装「极速振动提醒」到主屏幕</h3>
-        <button id="btn-close-install-modal" type="button" class="w-8 h-8 rounded-xl bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer">✕</button>
+    <!-- 网页内倒计时状态卡片 -->
+    <div class="card status-card" id="statusCard">
+      <div style="font-size:13px; color:var(--muted);" id="statusLabel">网页内倒计时运行中</div>
+      <div class="countdown" id="countdownText">00:00:00</div>
+      <button class="btn btn-danger" id="stopBtn">停止 / 取消</button>
+    </div>
+
+    <!-- 辅助设置 -->
+    <div class="card">
+      <div class="row">
+        <span>网页内提醒附带提示音（iOS 建议开启）</span>
+        <input type="checkbox" id="soundToggle" checked />
       </div>
-      <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
-        <p>将本应用添加到手机主屏幕或电脑桌面，即可像原生 App 一样离线秒开、独立窗口运行：</p>
-        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
-          <p class="font-semibold text-cyan-300">🤖 Android (Chrome / Edge)：</p>
-          <p>支持完整硬件级 <strong class="text-white">5次长振动</strong>。点击浏览器菜单 <strong class="text-white">「⋮」→「安装应用」</strong> 即可。</p>
-        </div>
-        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
-          <p class="font-semibold text-indigo-300">📱 iPhone / iPad (Safari)：</p>
-          <p>点击底部 <strong class="text-white">「分享」→「添加到主屏幕」</strong>。因苹果系统限制网页调用马达振动，建议在主界面开启 <strong class="text-white">「同时开启声音提示」</strong> 以获得屏幕闪烁+提示音双重提醒。</p>
-        </div>
+      <div class="row">
+        <span>保持屏幕常亮防休眠</span>
+        <input type="checkbox" id="wakeLockToggle" />
       </div>
-      <button id="btn-confirm-install-modal" type="button" class="mt-5 w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition cursor-pointer">
-        我知道了
-      </button>
+    </div>
+
+    <div class="hint">
+      <strong>💡 iPhone 锁屏震动秘诀：</strong><br/>
+      点击上方橙色按钮，网页会自动复制时间并跳转 iPhone「快捷指令」<code style="color:#fbbf24;">极速闹钟</code>，在系统「时钟」里生成原生强振动闹钟（哪怕手机锁屏、静音也能准点连续震动）。
     </div>
   </div>
-
-  <!-- 轻提示 Toast -->
-  <div id="toast-container" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center gap-2 w-full max-w-xs px-4"></div>
 
   <script>
-    /**
-     * ============================================================================
-     * 1. PWA 动态 Manifest 与 Service Worker 注册（支持离线与桌面安装）
-     * ============================================================================
-     */
-    (function initPWA() {
-      const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-        <defs>
-          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#22d3ee"/>
-            <stop offset="100%" stop-color="#4f46e5"/>
-          </linearGradient>
-        </defs>
-        <rect width="512" height="512" rx="112" fill="#0f172a"/>
-        <rect x="166" y="96" width="180" height="320" rx="36" fill="none" stroke="url(#g)" stroke-width="28"/>
-        <path d="M104 176v160M408 176v160" stroke="#22d3ee" stroke-width="26" stroke-linecap="round"/>
-      </svg>`;
-      const iconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgIcon);
+    // 动态注入 PWA Manifest 实现添加到主屏幕独立运行
+    const manifest = {
+      name: "极速闹钟",
+      short_name: "极速闹钟",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#0f172a",
+      theme_color: "#0f172a",
+      icons: [{
+        src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><text x='50' y='68' font-size='56' text-anchor='middle'>⏰</text></svg>",
+        sizes: "192x192",
+        type: "image/svg+xml"
+      }]
+    };
+    const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = URL.createObjectURL(manifestBlob);
+    document.head.appendChild(link);
 
-      const manifest = {
-        name: '极速振动提醒 - 智能5次振动闹钟',
-        short_name: '极速振动',
-        description: '输入数字秒设提醒，智能识别上午/下午，到点自动振动5次。',
-        start_url: './',
-        display: 'standalone',
-        background_color: '#0b1120',
-        theme_color: '#0f172a',
-        orientation: 'portrait',
-        icons: [
-          { src: iconUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
-          { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
-        ]
-      };
+    const timeInput = document.getElementById('timeInput');
+    const parsedBox = document.getElementById('parsedBox');
+    const parsedText = document.getElementById('parsedText');
+    const parsedDay = document.getElementById('parsedDay');
+    const toggleAmPmBtn = document.getElementById('toggleAmPmBtn');
+    const iosShortcutBtn = document.getElementById('iosShortcutBtn');
+    const startLocalBtn = document.getElementById('startLocalBtn');
+    const statusCard = document.getElementById('statusCard');
+    const statusLabel = document.getElementById('statusLabel');
+    const countdownText = document.getElementById('countdownText');
+    const stopBtn = document.getElementById('stopBtn');
+    const soundToggle = document.getElementById('soundToggle');
+    const wakeLockToggle = document.getElementById('wakeLockToggle');
 
-      try {
-        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-        const manifestURL = URL.createObjectURL(manifestBlob);
-        const link = document.createElement('link');
-        link.rel = 'manifest';
-        link.href = manifestURL;
-        document.head.appendChild(link);
+    let parsedState = null; // { hour24, minute, isTomorrow }
+    let manualAmPmOverride = null; // 'AM' | 'PM' | null
+    let timerId = null;
+    let wakeLock = null;
 
-        const appleIcon = document.createElement('link');
-        appleIcon.rel = 'apple-touch-icon';
-        appleIcon.href = iconUrl;
-        document.head.appendChild(appleIcon);
-      } catch (e) {
-        console.warn('Manifest 生成受限:', e);
-      }
+    function parseSmartTime(raw) {
+      const digits = raw.replace(/\D/g, '');
+      if (digits.length < 3 || digits.length > 4) return null;
 
-      if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
-        const swCode = `
-          const CACHE_NAME = 'quick-vibrate-pwa-v2';
-          self.addEventListener('install', (event) => {
-            self.skipWaiting();
-          });
-          self.addEventListener('activate', (event) => {
-            event.waitUntil(self.clients.claim());
-          });
-          self.addEventListener('fetch', (event) => {
-            if (event.request.method !== 'GET') return;
-            event.respondWith(
-              fetch(event.request)
-                .then((res) => {
-                  const copy = res.clone();
-                  caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => {});
-                  return res;
-                })
-                .catch(() => caches.match(event.request))
-            );
-          });
-        `;
-        try {
-          const swBlob = new Blob([swCode], { type: 'application/javascript' });
-          const swUrl = URL.createObjectURL(swBlob);
-          navigator.serviceWorker.register(swUrl).then(() => {
-            const statusEl = document.getElementById('pwa-status-text');
-            if (statusEl) statusEl.textContent = 'PWA 离线就绪 · 默认纯振动5次';
-          }).catch(() => {});
-        } catch (err) {}
-      }
-    })();
+      let h = digits.length === 3 ? parseInt(digits[0], 10) : parseInt(digits.slice(0, 2), 10);
+      let m = digits.length === 3 ? parseInt(digits.slice(1), 10) : parseInt(digits.slice(2), 10);
 
-    /**
-     * ============================================================================
-     * 2. 可选柔和提示音引擎（默认关闭，用户可手动开启辅助提醒）
-     * ============================================================================
-     */
-    class OptionalChimeEngine {
-      constructor() {
-        this.ctx = null;
-      }
+      if (m > 59 || h > 23) return null;
 
-      ensureContext() {
-        if (!this.ctx) {
-          const AudioCtx = window.AudioContext || window.webkitAudioContext;
-          if (AudioCtx) {
-            this.ctx = new AudioCtx();
-          }
-        }
-        if (this.ctx && this.ctx.state === 'suspended') {
-          this.ctx.resume().catch(() => {});
-        }
-        return this.ctx;
-      }
+      const now = new Date();
+      const currentIsPM = now.getHours() >= 12;
 
-      playSingleChime(step = 1) {
-        const ctx = this.ensureContext();
-        if (!ctx) return;
-
-        const now = ctx.currentTime;
-        const pitchBoost = 1 + (step - 1) * 0.025;
-        const notes = [
-          { freq: 659.25 * pitchBoost, start: 0, duration: 0.38 },
-          { freq: 987.77 * pitchBoost, start: 0.14, duration: 0.55 }
-        ];
-
-        notes.forEach(({ freq, start, duration }) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, now + start);
-          gain.gain.setValueAtTime(0.0001, now + start);
-          gain.gain.linearRampToValueAtTime(0.28, now + start + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + start + duration);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now + start);
-          osc.stop(now + start + duration + 0.05);
-        });
-      }
-    }
-
-    const chimeEngine = new OptionalChimeEngine();
-
-    /**
-     * ============================================================================
-     * 3. 核心智能时间解析器 (Smart AM/PM Inference)
-     * ============================================================================
-     */
-    function parseSmartTimeInput(rawStr, manualMeridiemOverride = null, now = new Date()) {
-      const cleaned = rawStr.trim().replace(/[：:;；.\s]/g, '');
-      if (!cleaned) return { status: 'empty' };
-
-      if (!/^\d+$/.test(cleaned)) {
-        return { status: 'error', message: '请输入纯数字（例如 1005 或 335）' };
-      }
-
-      if (cleaned.length < 3 || cleaned.length > 4) {
-        return { status: 'error', message: '请输入 3 位或 4 位数字（如 335 或 1005）' };
-      }
-
-      let rawHour = 0;
-      let minute = 0;
-
-      if (cleaned.length === 3) {
-        rawHour = parseInt(cleaned.slice(0, 1), 10);
-        minute = parseInt(cleaned.slice(1, 3), 10);
-      } else {
-        rawHour = parseInt(cleaned.slice(0, 2), 10);
-        minute = parseInt(cleaned.slice(2, 4), 10);
-      }
-
-      if (minute < 0 || minute > 59) {
-        return { status: 'error', message: `分钟「${String(minute).padStart(2, '0')}」无效，应在 00~59 之间` };
-      }
-
-      if (rawHour < 0 || rawHour > 23) {
-        return { status: 'error', message: `小时「${rawHour}」无效，应在 0~23 之间` };
-      }
-
-      const currentHour = now.getHours();
-      const isCurrentlyMorning = currentHour < 12;
-
-      let finalHour24 = rawHour;
-      let canToggleMeridiem = false;
-      let meridiem = 'AM';
-
-      if (rawHour >= 13) {
-        finalHour24 = rawHour;
-        meridiem = 'PM';
-        canToggleMeridiem = false;
-      } else if (rawHour === 0 && cleaned.length === 4) {
-        finalHour24 = 0;
-        meridiem = 'AM';
-        canToggleMeridiem = true;
-      } else if (rawHour === 12) {
-        canToggleMeridiem = true;
-        if (manualMeridiemOverride === 'AM') {
-          finalHour24 = 0;
-          meridiem = 'AM';
+      let hour24 = h;
+      if (h === 0) {
+        hour24 = 0;
+      } else if (h <= 12) {
+        if (manualAmPmOverride === 'AM') {
+          hour24 = h === 12 ? 0 : h;
+        } else if (manualAmPmOverride === 'PM') {
+          hour24 = h === 12 ? 12 : h + 12;
         } else {
-          finalHour24 = 12;
-          meridiem = 'PM';
-        }
-      } else {
-        canToggleMeridiem = true;
-        if (manualMeridiemOverride === 'AM') {
-          finalHour24 = rawHour;
-          meridiem = 'AM';
-        } else if (manualMeridiemOverride === 'PM') {
-          finalHour24 = rawHour + 12;
-          meridiem = 'PM';
-        } else {
-          if (isCurrentlyMorning) {
-            finalHour24 = rawHour;
-            meridiem = 'AM';
+          // 智能判定：当前上午则倾向 AM，当前下午则倾向 PM
+          if (currentIsPM) {
+            hour24 = h === 12 ? 12 : h + 12;
           } else {
-            finalHour24 = rawHour + 12;
-            meridiem = 'PM';
+            hour24 = h === 12 ? 12 : h;
           }
         }
       }
 
-      const targetDate = new Date(now.getTime());
-      targetDate.setHours(finalHour24, minute, 0, 0);
-
+      const target = new Date(now);
+      target.setHours(hour24, m, 0, 0);
       let isTomorrow = false;
-      if (targetDate.getTime() <= now.getTime()) {
-        targetDate.setDate(targetDate.getDate() + 1);
+      if (target <= now) {
+        target.setDate(target.getDate() + 1);
         isTomorrow = true;
       }
 
-      const displayHour12 = finalHour24 % 12 === 0 ? 12 : finalHour24 % 12;
-      const paddedMinute = String(minute).padStart(2, '0');
-      const chinesePeriod = finalHour24 < 6 ? '凌晨' : (finalHour24 < 12 ? '上午' : (finalHour24 < 18 ? '下午' : '晚上'));
-      const dayPrefix = isTomorrow ? '明天' : '今天';
-
-      return {
-        status: 'valid',
-        targetTimestamp: targetDate.getTime(),
-        hour24: finalHour24,
-        minute,
-        meridiem,
-        canToggleMeridiem,
-        isTomorrow,
-        labelZh: `${dayPrefix} ${chinesePeriod} ${displayHour12}:${paddedMinute}`,
-        labelEn12: `${displayHour12}:${paddedMinute} ${meridiem}`,
-        label24: `${String(finalHour24).padStart(2, '0')}:${paddedMinute}`
-      };
+      return { hour24, minute: m, target, isTomorrow };
     }
 
-    /**
-     * ============================================================================
-     * 4. 应用状态管理与持久化 (默认纯振动，声音默认关闭)
-     * ============================================================================
-     */
-    const STORAGE_KEY = 'smart_quick_vibrate_alarms_v2';
-    const PREFS_KEY = 'smart_quick_vibrate_prefs_v2';
-
-    const supportsHardwareVibrate = typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';
-    const isAppleMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent || '');
-
-    let state = {
-      alarms: [],
-      manualMeridiem: null,
-      isCompletedExpanded: true,
-      ringingSession: null,
-      deferredInstallPrompt: null,
-      soundFallbackEnabled: false, // 默认关闭声音，纯振动优先
-      wakeLockSentinel: null,
-      wakeLockDesired: false
-    };
-
-    function loadState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) state.alarms = parsed;
-        }
-        const prefsRaw = localStorage.getItem(PREFS_KEY);
-        if (prefsRaw) {
-          const prefs = JSON.parse(prefsRaw);
-          state.soundFallbackEnabled = Boolean(prefs.soundFallbackEnabled);
-        }
-      } catch (e) {}
-    }
-
-    function saveAlarms() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.alarms));
-      } catch (e) {}
-    }
-
-    function savePrefs() {
-      try {
-        localStorage.setItem(PREFS_KEY, JSON.stringify({
-          soundFallbackEnabled: state.soundFallbackEnabled
-        }));
-      } catch (e) {}
-    }
-
-    /**
-     * ============================================================================
-     * 5. 5次节奏振动引擎 (5-Cycle Vibration Alert Engine)
-     *    - 每次振动 600ms + 停顿 500ms，精准循环 5 次
-     *    - 同步视觉波纹脉冲、卡片触感缩放及可选声音提示
-     * ============================================================================
-     */
-    const ringingModal = document.getElementById('ringing-modal');
-    const ringingCard = document.getElementById('ringing-card');
-    const chimeCurrentNumEl = document.getElementById('chime-current-num');
-    const chimeDots = document.querySelectorAll('.chime-dot');
-    const ringingTimeTextEl = document.getElementById('ringing-time-text');
-    const ringingNoteTextEl = document.getElementById('ringing-note-text');
-    const ringingModeHintEl = document.getElementById('ringing-mode-hint');
-
-    function updatePulseVisuals(currentCount) {
-      chimeCurrentNumEl.textContent = String(currentCount);
-      chimeDots.forEach((dot, idx) => {
-        if (idx < currentCount) {
-          dot.classList.remove('bg-slate-700');
-          dot.classList.add('bg-cyan-400', 'scale-125', 'shadow-md', 'shadow-cyan-400/60');
-        } else {
-          dot.classList.add('bg-slate-700');
-          dot.classList.remove('bg-cyan-400', 'scale-125', 'shadow-md', 'shadow-cyan-400/60');
-        }
-      });
-
-      // 卡片随每次振动产生微弹触感反馈
-      ringingCard.classList.add('scale-[1.03]', 'border-cyan-300');
-      setTimeout(() => {
-        ringingCard.classList.remove('scale-[1.03]', 'border-cyan-300');
-      }, 550);
-    }
-
-    function stopVibrationAlert(markCompleted = true) {
-      if (!state.ringingSession) return;
-
-      clearInterval(state.ringingSession.timerId);
-      const { alarmId, isTest } = state.ringingSession;
-      state.ringingSession = null;
-
-      ringingModal.classList.add('hidden');
-      if (supportsHardwareVibrate) {
-        try { navigator.vibrate(0); } catch (e) {}
-      }
-
-      if (!isTest && markCompleted && alarmId) {
-        const target = state.alarms.find((a) => a.id === alarmId);
-        if (target) {
-          target.enabled = false;
-          target.completed = true;
-          target.completedAt = Date.now();
-          saveAlarms();
-          renderAlarmsList();
-        }
-      }
-    }
-
-    function triggerFiveVibrationAlarm({ id = null, labelEn12 = '测试振动', note = '时间到了！', isTest = false }) {
-      if (state.ringingSession) {
-        stopVibrationAlert(false);
-      }
-
-      const MAX_PULSES = 5;
-      const VIBRATE_MS = 600; // 单次振动时长 600ms
-      const PAUSE_MS = 500;   // 间隔停顿 500ms
-      const CYCLE_MS = VIBRATE_MS + PAUSE_MS; // 每轮 1100ms
-
-      let count = 1;
-
-      ringingTimeTextEl.textContent = labelEn12;
-      ringingNoteTextEl.textContent = note || '时间到了！';
-      ringingModeHintEl.textContent = state.soundFallbackEnabled
-        ? '振动 + 提示音双重提醒，满 5 次自动停止'
-        : '纯振动静音模式，满 5 次后将自动停止';
-
-      updatePulseVisuals(count);
-      ringingModal.classList.remove('hidden');
-
-      // 发送系统桌面通知（如果已授权）
-      if ('Notification' in window && Notification.permission === 'granted') {
-        try {
-          new Notification(`📳 极速振动提醒 (${labelEn12})`, {
-            body: `${note || '设定的时间到了！'}（自动振动 5 次）`,
-            tag: id || 'test-vibrate-alarm',
-            vibrate: [600, 500, 600, 500, 600]
-          });
-        } catch (e) {}
-      }
-
-      // 执行单次脉冲：硬件马达振动 600ms + 视觉脉冲 + 可选声音
-      const executePulse = (step) => {
-        updatePulseVisuals(step);
-        if (supportsHardwareVibrate) {
-          try {
-            navigator.vibrate(VIBRATE_MS);
-          } catch (e) {}
-        }
-        if (state.soundFallbackEnabled) {
-          chimeEngine.playSingleChime(step);
-        }
-      };
-
-      // 第 1 次立即触发
-      executePulse(count);
-
-      // 按 600ms 振动 + 500ms 停顿的节奏精准执行第 2~5 次
-      const timerId = setInterval(() => {
-        count += 1;
-        if (count <= MAX_PULSES) {
-          executePulse(count);
-        } else {
-          clearInterval(timerId);
-          setTimeout(() => {
-            if (state.ringingSession && state.ringingSession.timerId === timerId) {
-              stopVibrationAlert(true);
-              showToast('已完成 5 次振动并自动停止');
-            }
-          }, 700);
-        }
-      }, CYCLE_MS);
-
-      state.ringingSession = {
-        alarmId: id,
-        timerId,
-        count,
-        isTest
-      };
-    }
-
-    /**
-     * ============================================================================
-     * 6. 屏幕常亮防休眠 (Screen Wake Lock) 与系统通知状态管理
-     * ============================================================================
-     */
-    async function requestWakeLock() {
-      if (!('wakeLock' in navigator)) {
-        showToast('当前浏览器不支持屏幕常亮 API，请保持页面在前台');
-        return;
-      }
-      try {
-        state.wakeLockSentinel = await navigator.wakeLock.request('screen');
-        state.wakeLockDesired = true;
-        updateSettingsBadges();
-        showToast('已开启屏幕常亮防休眠');
-        state.wakeLockSentinel.addEventListener('release', () => {
-          state.wakeLockSentinel = null;
-          updateSettingsBadges();
-        });
-      } catch (err) {
-        showToast('未能获取屏幕常亮权限');
-      }
-    }
-
-    async function releaseWakeLock() {
-      state.wakeLockDesired = false;
-      if (state.wakeLockSentinel) {
-        try {
-          await state.wakeLockSentinel.release();
-        } catch (e) {}
-        state.wakeLockSentinel = null;
-      }
-      updateSettingsBadges();
-      showToast('已关闭屏幕常亮');
-    }
-
-    function updateSettingsBadges() {
-      // 1. 硬件振动支持状态徽章
-      const vibrateBadge = document.getElementById('vibrate-support-badge');
-      if (supportsHardwareVibrate && !isAppleMobile) {
-        vibrateBadge.innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span class="text-emerald-300">硬件马达振动就绪 (5次脉冲)</span>
-        `;
-      } else {
-        vibrateBadge.innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-          <span class="text-amber-200/90">当前设备不支持网页马达，建议开启声音辅助</span>
-        `;
-      }
-
-      // 2. 通知权限按钮状态
-      const notifyBtn = document.getElementById('btn-request-notify');
-      if (!('Notification' in window)) {
-        notifyBtn.textContent = '不支持通知';
-        notifyBtn.disabled = true;
-        notifyBtn.classList.add('opacity-50');
-      } else if (Notification.permission === 'granted') {
-        notifyBtn.textContent = '✓ 通知已开启';
-        notifyBtn.className = 'shrink-0 px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-medium text-emerald-300';
-      } else if (Notification.permission === 'denied') {
-        notifyBtn.textContent = '通知已禁用';
-        notifyBtn.className = 'shrink-0 px-2.5 py-1 rounded-lg bg-rose-500/15 border border-rose-500/30 text-[11px] font-medium text-rose-300';
-      } else {
-        notifyBtn.textContent = '开启系统通知';
-      }
-
-      // 3. 屏幕常亮状态
-      const wlDot = document.getElementById('wakelock-dot');
-      const wlSub = document.getElementById('wakelock-status-sub');
-      const isWlActive = Boolean(state.wakeLockSentinel);
-      wlDot.className = `w-2.5 h-2.5 rounded-full shrink-0 transition-colors ${isWlActive ? 'bg-emerald-400 shadow-sm shadow-emerald-400' : 'bg-slate-700'}`;
-      wlSub.textContent = isWlActive ? '已开启 (防息屏)' : '已关闭';
-      wlSub.className = `text-[10px] ${isWlActive ? 'text-emerald-400' : 'text-slate-500'}`;
-
-      // 4. 可选声音状态
-      const sndDot = document.getElementById('sound-dot');
-      const sndSub = document.getElementById('sound-status-sub');
-      const modeSummary = document.getElementById('alert-mode-summary');
-      sndDot.className = `w-2.5 h-2.5 rounded-full shrink-0 transition-colors ${state.soundFallbackEnabled ? 'bg-cyan-400 shadow-sm shadow-cyan-400' : 'bg-slate-700'}`;
-      sndSub.textContent = state.soundFallbackEnabled ? '已开启 (振动+声音)' : '默认关闭 (纯振动)';
-      sndSub.className = `text-[10px] ${state.soundFallbackEnabled ? 'text-cyan-400' : 'text-slate-500'}`;
-      modeSummary.textContent = state.soundFallbackEnabled ? '到点振动 + 提示音 5 次' : '每次到点纯振动 5 次';
-    }
-
-    /**
-     * ============================================================================
-     * 7. UI 渲染与倒计时格式化
-     * ============================================================================
-     */
-    function formatCountdown(targetTs, nowTs = Date.now()) {
-      const diffMs = targetTs - nowTs;
-      if (diffMs <= 0) return '即将触发';
-
-      const totalSeconds = Math.ceil(diffMs / 1000);
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-
-      if (hours > 0) return `还有 ${hours}小时 ${minutes}分钟`;
-      if (minutes > 0) return `还有 ${minutes}分钟 ${seconds}秒`;
-      return `还有 ${seconds} 秒`;
-    }
-
-    function showToast(message) {
-      const container = document.getElementById('toast-container');
-      const toast = document.createElement('div');
-      toast.className = 'px-4 py-2.5 rounded-2xl bg-slate-800/95 border border-slate-700 text-xs font-medium text-white shadow-xl backdrop-blur-md transition-all duration-300 transform translate-y-2 opacity-0 text-center';
-      toast.textContent = message;
-      container.appendChild(toast);
-
-      requestAnimationFrame(() => {
-        toast.classList.remove('translate-y-2', 'opacity-0');
-      });
-
-      setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-y-2');
-        setTimeout(() => toast.remove(), 300);
-      }, 2400);
-    }
-
-    const timeInputEl = document.getElementById('time-input');
-    const noteInputEl = document.getElementById('note-input');
-    const btnClearInput = document.getElementById('btn-clear-input');
-    const parseEmptyState = document.getElementById('parse-empty-state');
-    const parseValidState = document.getElementById('parse-valid-state');
-    const parseErrorState = document.getElementById('parse-error-state');
-    const parseErrorMsg = document.getElementById('parse-error-msg');
-    const parsedTargetLabel = document.getElementById('parsed-target-label');
-    const parsed24hBadge = document.getElementById('parsed-24h-badge');
-    const parsedCountdownHint = document.getElementById('parsed-countdown-hint');
-    const btnToggleAmpm = document.getElementById('btn-toggle-ampm');
-
-    function updateInputPreview() {
-      const val = timeInputEl.value;
-      btnClearInput.classList.toggle('hidden', val.length === 0);
-
-      const res = parseSmartTimeInput(val, state.manualMeridiem);
-
-      parseEmptyState.classList.add('hidden');
-      parseValidState.classList.add('hidden');
-      parseErrorState.classList.add('hidden');
-
-      if (res.status === 'empty') {
-        parseEmptyState.classList.remove('hidden');
-      } else if (res.status === 'error') {
-        parseErrorMsg.textContent = res.message;
-        parseErrorState.classList.remove('hidden');
-      } else if (res.status === 'valid') {
-        parsedTargetLabel.textContent = res.labelZh;
-        parsed24hBadge.textContent = res.labelEn12;
-        parsedCountdownHint.textContent = formatCountdown(res.targetTimestamp);
-        btnToggleAmpm.classList.toggle('hidden', !res.canToggleMeridiem);
-        parseValidState.classList.remove('hidden');
-      }
-    }
-
-    function escapeHtml(str) {
-      return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
-    function renderAlarmsList() {
-      const activeListEl = document.getElementById('active-alarms-list');
-      const completedListEl = document.getElementById('completed-alarms-list');
-      const emptyPlaceholder = document.getElementById('empty-alarms-placeholder');
-      const activeCountBadge = document.getElementById('active-count-badge');
-      const completedSection = document.getElementById('completed-section');
-      const completedCountEl = document.getElementById('completed-count');
-
-      const activeAlarms = state.alarms
-        .filter((a) => !a.completed)
-        .sort((a, b) => a.targetTimestamp - b.targetTimestamp);
-
-      const completedAlarms = state.alarms
-        .filter((a) => a.completed)
-        .sort((a, b) => (b.completedAt || b.targetTimestamp) - (a.completedAt || a.targetTimestamp));
-
-      activeCountBadge.textContent = String(activeAlarms.length);
-      emptyPlaceholder.classList.toggle('hidden', activeAlarms.length > 0);
-
-      activeListEl.innerHTML = '';
-      activeAlarms.forEach((alarm) => {
-        const card = document.createElement('div');
-        card.className = `rounded-2xl border p-4 transition-all flex items-center justify-between gap-3 ${
-          alarm.enabled
-            ? 'bg-slate-900/95 border-slate-800 shadow-md'
-            : 'bg-slate-900/40 border-slate-800/50 opacity-60'
-        }`;
-
-        const countdownText = alarm.enabled ? formatCountdown(alarm.targetTimestamp) : '已暂停';
-
-        card.innerHTML = `
-          <div class="min-w-0 flex-1">
-            <div class="flex items-baseline gap-2 flex-wrap">
-              <span class="text-2xl font-extrabold text-white tabular-nums tracking-tight">${alarm.labelEn12}</span>
-              <span class="text-xs font-medium text-cyan-300">${alarm.labelZh}</span>
-            </div>
-            <div class="flex items-center gap-2 mt-1">
-              <span class="alarm-countdown text-xs ${alarm.enabled ? 'text-emerald-400' : 'text-slate-500'} tabular-nums" data-ts="${alarm.targetTimestamp}" data-enabled="${alarm.enabled}">
-                ${countdownText}
-              </span>
-              ${alarm.note ? `<span class="text-slate-600">·</span><span class="text-xs text-slate-300 truncate">${escapeHtml(alarm.note)}</span>` : ''}
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2 shrink-0">
-            <button type="button" data-action="toggle" data-id="${alarm.id}" aria-label="切换开关"
-              class="w-12 h-7 rounded-full p-1 transition-colors cursor-pointer ${alarm.enabled ? 'bg-cyan-500' : 'bg-slate-700'}">
-              <span class="block w-5 h-5 rounded-full bg-white shadow transform transition-transform ${alarm.enabled ? 'translate-x-5' : 'translate-x-0'}"></span>
-            </button>
-            <button type="button" data-action="delete" data-id="${alarm.id}" aria-label="删除提醒"
-              class="w-9 h-9 rounded-xl bg-slate-800/80 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 flex items-center justify-center transition cursor-pointer">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          </div>
-        `;
-        activeListEl.appendChild(card);
-      });
-
-      if (completedAlarms.length > 0) {
-        completedSection.classList.remove('hidden');
-        completedCountEl.textContent = String(completedAlarms.length);
-        completedListEl.classList.toggle('hidden', !state.isCompletedExpanded);
-        document.getElementById('completed-arrow').textContent = state.isCompletedExpanded ? '▼' : '▶';
-
-        completedListEl.innerHTML = '';
-        completedAlarms.forEach((alarm) => {
-          const item = document.createElement('div');
-          item.className = 'rounded-2xl bg-slate-900/40 border border-slate-800/60 px-4 py-3 flex items-center justify-between gap-2';
-          item.innerHTML = `
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-bold text-slate-400 line-through tabular-nums">${alarm.labelEn12}</span>
-                <span class="text-[11px] text-slate-500">已振动 5 次</span>
-                ${alarm.note ? `<span class="text-xs text-slate-500 truncate">· ${escapeHtml(alarm.note)}</span>` : ''}
-              </div>
-            </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-              <button type="button" data-action="rearm" data-id="${alarm.id}"
-                class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-medium text-cyan-300 transition cursor-pointer">
-                再设一次
-              </button>
-              <button type="button" data-action="delete" data-id="${alarm.id}"
-                class="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 transition cursor-pointer">
-                ✕
-              </button>
-            </div>
-          `;
-          completedListEl.appendChild(item);
-        });
-      } else {
-        completedSection.classList.add('hidden');
-      }
-    }
-
-    /**
-     * ============================================================================
-     * 8. 实时时钟与后台高精度检测循环
-     * ============================================================================
-     */
-    const liveClockTimeEl = document.getElementById('live-clock-time');
-    const liveClockAmpmEl = document.getElementById('live-clock-ampm');
-    const currentDateDisplayEl = document.getElementById('current-date-display');
-    const currentPeriodBadgeEl = document.getElementById('current-period-badge');
-    const smartRuleHintEl = document.getElementById('smart-rule-hint');
-
-    const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-
-    function tickClockAndCheckAlarms() {
-      const now = new Date();
-      const nowTs = now.getTime();
-      const h24 = now.getHours();
-      const m = now.getMinutes();
-      const s = now.getSeconds();
-      const isAm = h24 < 12;
+    function formatDisplay(state) {
+      const h24 = state.hour24;
+      const mStr = String(state.minute).padStart(2, '0');
+      const period = h24 >= 12 ? '下午 (PM)' : '上午 (AM)';
       const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
-
-      liveClockTimeEl.textContent = `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-      liveClockAmpmEl.textContent = isAm ? 'AM' : 'PM';
-      currentDateDisplayEl.textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${WEEKDAYS[now.getDay()]}`;
-
-      if (isAm) {
-        currentPeriodBadgeEl.textContent = '上午时段 (AM)';
-        currentPeriodBadgeEl.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/25';
-        smartRuleHintEl.innerHTML = '当前处于<strong class="text-slate-200">上午</strong>，输入如 <code class="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300">1005</code> 将自动设为 <strong class="text-cyan-300">10:05 AM</strong>';
-      } else {
-        currentPeriodBadgeEl.textContent = '下午时段 (PM)';
-        currentPeriodBadgeEl.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
-        smartRuleHintEl.innerHTML = '当前处于<strong class="text-slate-200">下午</strong>，输入如 <code class="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300">335</code> 将自动设为 <strong class="text-indigo-300">3:35 PM</strong>';
-      }
-
-      if (timeInputEl.value.trim()) {
-        updateInputPreview();
-      }
-
-      document.querySelectorAll('.alarm-countdown').forEach((el) => {
-        if (el.dataset.enabled === 'true') {
-          const ts = Number(el.dataset.ts);
-          el.textContent = formatCountdown(ts, nowTs);
-        }
-      });
-
-      for (const alarm of state.alarms) {
-        if (alarm.enabled && !alarm.completed && nowTs >= alarm.targetTimestamp) {
-          alarm.enabled = false;
-          alarm.completed = true;
-          alarm.completedAt = nowTs;
-          saveAlarms();
-          renderAlarmsList();
-
-          triggerFiveVibrationAlarm({
-            id: alarm.id,
-            labelEn12: alarm.labelEn12,
-            note: alarm.note || `${alarm.labelZh} 提醒时间到了！`,
-            isTest: false
-          });
-          break;
-        }
-      }
+      const h24Str = String(h24).padStart(2, '0');
+      return {
+        label: `${period} ${h12}:${mStr}`,
+        time24: `${h24Str}:${mStr}`,
+        day: state.isTomorrow ? '明天（今日该时间已过）' : '今天'
+      };
     }
 
-    /**
-     * ============================================================================
-     * 9. 事件绑定与用户交互
-     * ============================================================================
-     */
-    document.getElementById('btn-request-notify').addEventListener('click', () => {
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission().then(() => {
-          updateSettingsBadges();
-          if (Notification.permission === 'granted') {
-            showToast('系统通知权限已开启');
-          }
-        }).catch(() => {});
-      }
-    });
-
-    document.getElementById('btn-toggle-wakelock').addEventListener('click', () => {
-      if (state.wakeLockSentinel) {
-        releaseWakeLock();
-      } else {
-        requestWakeLock();
-      }
-    });
-
-    document.getElementById('btn-toggle-sound-fallback').addEventListener('click', () => {
-      state.soundFallbackEnabled = !state.soundFallbackEnabled;
-      savePrefs();
-      updateSettingsBadges();
-      if (state.soundFallbackEnabled) {
-        chimeEngine.ensureContext();
-        chimeEngine.playSingleChime(1);
-        showToast('已开启声音辅助（振动 + 提示音）');
-      } else {
-        showToast('已切换为纯振动静音模式');
-      }
-    });
-
-    timeInputEl.addEventListener('input', () => {
-      state.manualMeridiem = null;
-      updateInputPreview();
-    });
-
-    btnClearInput.addEventListener('click', () => {
-      timeInputEl.value = '';
-      state.manualMeridiem = null;
-      updateInputPreview();
-      timeInputEl.focus();
-    });
-
-    document.querySelectorAll('.quick-sample').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        timeInputEl.value = btn.dataset.quick;
-        state.manualMeridiem = null;
-        updateInputPreview();
-        timeInputEl.focus();
-      });
-    });
-
-    btnToggleAmpm.addEventListener('click', () => {
-      const currentRes = parseSmartTimeInput(timeInputEl.value, state.manualMeridiem);
-      if (currentRes.status === 'valid' && currentRes.canToggleMeridiem) {
-        state.manualMeridiem = currentRes.meridiem === 'AM' ? 'PM' : 'AM';
-        updateInputPreview();
-      }
-    });
-
-    document.getElementById('alarm-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      if (state.soundFallbackEnabled) {
-        chimeEngine.ensureContext();
-      }
-
-      const res = parseSmartTimeInput(timeInputEl.value, state.manualMeridiem);
-      if (res.status !== 'valid') {
-        showToast(res.message || '请输入有效的时间数字');
-        timeInputEl.focus();
+    function updateUI() {
+      parsedState = parseSmartTime(timeInput.value);
+      if (!parsedState) {
+        parsedBox.style.display = 'none';
+        iosShortcutBtn.disabled = true;
+        startLocalBtn.disabled = true;
         return;
       }
+      const fmt = formatDisplay(parsedState);
+      parsedText.textContent = `${fmt.label}  [${fmt.time24}]`;
+      parsedDay.textContent = fmt.day;
+      parsedBox.style.display = 'flex';
+      iosShortcutBtn.disabled = false;
+      startLocalBtn.disabled = false;
+    }
 
-      const newAlarm = {
-        id: 'alarm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-        rawInput: timeInputEl.value.trim(),
-        targetTimestamp: res.targetTimestamp,
-        hour24: res.hour24,
-        minute: res.minute,
-        labelZh: res.labelZh,
-        labelEn12: res.labelEn12,
-        note: noteInputEl.value.trim(),
-        enabled: true,
-        completed: false
+    timeInput.addEventListener('input', () => {
+      manualAmPmOverride = null;
+      updateUI();
+    });
+
+    toggleAmPmBtn.addEventListener('click', () => {
+      if (!parsedState) return;
+      manualAmPmOverride = parsedState.hour24 >= 12 ? 'AM' : 'PM';
+      updateUI();
+    });
+
+    // 核心联动：复制 24 小时制时间并唤起 iOS 快捷指令「极速闹钟」
+    iosShortcutBtn.addEventListener('click', async () => {
+      if (!parsedState) return;
+      const fmt = formatDisplay(parsedState);
+      const timeStr = fmt.time24; // 例如 "10:05" 或 "15:35"
+
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(timeStr);
+        }
+      } catch (e) {
+        // 忽略剪贴板权限异常，URL 参数依然会传递
+      }
+
+      const shortcutName = encodeURIComponent('极速闹钟');
+      const inputVal = encodeURIComponent(timeStr);
+      window.location.href = `shortcuts://run-shortcut?name=${shortcutName}&input=text&text=${inputVal}`;
+    });
+
+    // 网页内 5 次提醒引擎（Android 振动 + iOS 声音备用）
+    function playBeep() {
+      if (!soundToggle.checked) return;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      gain.gain.setValueAtTime(0.4, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.45);
+    }
+
+    function triggerFiveAlerts() {
+      let count = 0;
+      statusCard.classList.add('ringing');
+      const fireOnce = () => {
+        count++;
+        statusLabel.textContent = `⏰ 正在提醒：第 ${count} / 5 次`;
+        if (navigator.vibrate) navigator.vibrate(600);
+        playBeep();
+        if (count >= 5) {
+          clearInterval(alertInterval);
+          setTimeout(() => {
+            statusCard.classList.remove('ringing');
+            statusLabel.textContent = '已完成 5 次提醒';
+          }, 800);
+        }
       };
+      fireOnce();
+      const alertInterval = setInterval(fireOnce, 1100);
+    }
 
-      state.alarms.push(newAlarm);
-      saveAlarms();
-      renderAlarmsList();
+    startLocalBtn.addEventListener('click', () => {
+      if (!parsedState) return;
+      clearInterval(timerId);
+      const targetTime = parsedState.target.getTime();
+      statusCard.classList.add('active');
+      statusCard.classList.remove('ringing');
+      statusLabel.textContent = `目标时间 ${formatDisplay(parsedState).time24}（请保持屏幕常亮）`;
 
-      // 给一个 40ms 轻触觉反馈确认已设定
-      if (supportsHardwareVibrate) {
-        try { navigator.vibrate(40); } catch (err) {}
-      }
-      showToast(`已设好：${res.labelZh}（振动5次）`);
-
-      timeInputEl.value = '';
-      noteInputEl.value = '';
-      state.manualMeridiem = null;
-      updateInputPreview();
-    });
-
-    document.addEventListener('click', (e) => {
-      const actionBtn = e.target.closest('[data-action]');
-      if (!actionBtn) return;
-
-      const action = actionBtn.dataset.action;
-      const id = actionBtn.dataset.id;
-      const idx = state.alarms.findIndex((a) => a.id === id);
-      if (idx === -1) return;
-
-      if (action === 'toggle') {
-        const alarm = state.alarms[idx];
-        alarm.enabled = !alarm.enabled;
-        if (alarm.enabled && alarm.targetTimestamp <= Date.now()) {
-          const next = new Date();
-          next.setHours(alarm.hour24, alarm.minute, 0, 0);
-          if (next.getTime() <= Date.now()) {
-            next.setDate(next.getDate() + 1);
-          }
-          alarm.targetTimestamp = next.getTime();
-          const isTomorrow = next.getDate() !== new Date().getDate();
-          alarm.labelZh = alarm.labelZh.replace(/^(今天|明天)/, isTomorrow ? '明天' : '今天');
+      timerId = setInterval(() => {
+        const diff = targetTime - Date.now();
+        if (diff <= 0) {
+          clearInterval(timerId);
+          countdownText.textContent = '00:00:00';
+          triggerFiveAlerts();
+          return;
         }
-        saveAlarms();
-        renderAlarmsList();
-      } else if (action === 'delete') {
-        state.alarms.splice(idx, 1);
-        saveAlarms();
-        renderAlarmsList();
-        showToast('已删除提醒');
-      } else if (action === 'rearm') {
-        const old = state.alarms[idx];
-        const next = new Date();
-        next.setHours(old.hour24, old.minute, 0, 0);
-        if (next.getTime() <= Date.now()) {
-          next.setDate(next.getDate() + 1);
+        const sec = Math.floor(diff / 1000);
+        const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+        const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+        const s = String(sec % 60).padStart(2, '0');
+        countdownText.textContent = `${h}:${m}:${s}`;
+      }, 250);
+    });
+
+    stopBtn.addEventListener('click', () => {
+      clearInterval(timerId);
+      statusCard.classList.remove('active', 'ringing');
+      if (navigator.vibrate) navigator.vibrate(0);
+    });
+
+    // 屏幕常亮控制
+    wakeLockToggle.addEventListener('change', async (e) => {
+      if (e.target.checked && 'wakeLock' in navigator) {
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+        } catch (err) {
+          e.target.checked = false;
         }
-        const isTomorrow = next.getDate() !== new Date().getDate();
-        old.targetTimestamp = next.getTime();
-        old.labelZh = old.labelZh.replace(/^(今天|明天)/, isTomorrow ? '明天' : '今天');
-        old.enabled = true;
-        old.completed = false;
-        delete old.completedAt;
-        saveAlarms();
-        renderAlarmsList();
-        showToast(`已重新开启：${old.labelZh}`);
-      }
-    });
-
-    document.getElementById('btn-toggle-completed').addEventListener('click', () => {
-      state.isCompletedExpanded = !state.isCompletedExpanded;
-      renderAlarmsList();
-    });
-
-    document.getElementById('btn-clear-completed').addEventListener('click', () => {
-      state.alarms = state.alarms.filter((a) => !a.completed);
-      saveAlarms();
-      renderAlarmsList();
-      showToast('已清空历史记录');
-    });
-
-    // 测试 5 次振动按钮
-    document.getElementById('btn-test-alarm').addEventListener('click', () => {
-      if (state.soundFallbackEnabled) {
-        chimeEngine.ensureContext();
-      }
-      const now = new Date();
-      const h12 = now.getHours() % 12 === 0 ? 12 : now.getHours() % 12;
-      const m = String(now.getMinutes()).padStart(2, '0');
-      const ampm = now.getHours() < 12 ? 'AM' : 'PM';
-      triggerFiveVibrationAlarm({
-        labelEn12: `${h12}:${m} ${ampm}`,
-        note: '测试 5 次节奏振动效果',
-        isTest: true
-      });
-    });
-
-    // 关闭振动提醒弹窗
-    document.getElementById('btn-dismiss-ringing').addEventListener('click', () => {
-      stopVibrationAlert(true);
-    });
-
-    // PWA 安装提示处理
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      state.deferredInstallPrompt = e;
-    });
-
-    const installModal = document.getElementById('install-guide-modal');
-    document.getElementById('btn-install-pwa').addEventListener('click', async () => {
-      if (state.deferredInstallPrompt) {
-        state.deferredInstallPrompt.prompt();
-        const { outcome } = await state.deferredInstallPrompt.userChoice;
-        if (outcome === 'accepted') {
-          state.deferredInstallPrompt = null;
-        }
-      } else {
-        installModal.classList.remove('hidden');
-      }
-    });
-
-    document.getElementById('btn-close-install-modal').addEventListener('click', () => {
-      installModal.classList.add('hidden');
-    });
-    document.getElementById('btn-confirm-install-modal').addEventListener('click', () => {
-      installModal.classList.add('hidden');
-    });
-
-    // 切回前台时校准时间并按需恢复屏幕常亮
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
-        tickClockAndCheckAlarms();
-        if (state.wakeLockDesired && !state.wakeLockSentinel && 'wakeLock' in navigator) {
-          navigator.wakeLock.request('screen').then((sentinel) => {
-            state.wakeLockSentinel = sentinel;
-            updateSettingsBadges();
-          }).catch(() => {});
-        }
-      }
-    });
-
-    window.addEventListener('DOMContentLoaded', () => {
-      loadState();
-      updateSettingsBadges();
-      renderAlarmsList();
-      tickClockAndCheckAlarms();
-      setInterval(tickClockAndCheckAlarms, 500);
-
-      if (window.innerWidth >= 640) {
-        timeInputEl.focus();
+      } else if (wakeLock) {
+        await wakeLock.release();
+        wakeLock = null;
       }
     });
   </script>
